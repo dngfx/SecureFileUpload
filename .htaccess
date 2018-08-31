@@ -1,0 +1,2 @@
+RewriteEngine on
+RewriteRule ^(.*)$ ../decrypt.php?file=$1 [NC,QSA]
