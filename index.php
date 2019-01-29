@@ -49,6 +49,7 @@ if( empty( $_FILES ) ) {
 HTML;
 	
 	$skeleton = str_replace( "{{content}}", $content, $skeleton );
+	$skeleton = str_replace( "{{title}}", $uploader_title, $skeleton );
 	
 	echo $skeleton;
 	exit;
