@@ -3,6 +3,9 @@
 ini_set( "display_errors", "1" );
 error_reporting( E_ALL );
 
+$base_url = "https://your.website/gallery";
+$uploader_title = "Secure";
+
 function random_string( $len = 32 )
 {
 	$characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!';
@@ -98,14 +101,16 @@ if( empty( $file_extension ) ) {
 // We have a valid image, prepare to encrypt and put into gallery directory
 
 $encryption_key = random_string();
-$encryption_cypher = "AES-256-CTR";
+$encryption_cypher = "AES-256-CBC-HMAC-SHA256";
 $iv = openssl_random_pseudo_bytes( openssl_cipher_iv_length( $encryption_cypher ) );
 
 $unique_filename = uniqid( "", true ) . uniqid( "", true );
 $upload_name = "./Files/" . $unique_filename . "." . $file_extension;
 
 $encrypted_file = openssl_encrypt( file_get_contents( $tmp_file_name ), $encryption_cypher, $encryption_key, OPENSSL_RAW_DATA, $iv );
-$hmac = hash_hmac( "sha256", $encrypted_file, $encryption_key, true );
+$hmac = hash_hmac( "sha512", $encrypted_file, $encryption_key, true );
+
+
 $sanitised_file = base64_encode( $iv . $hmac . $encrypted_file );
 
 $fname = $unique_filename . "." . $file_extension;
@@ -124,9 +129,10 @@ $html = <<<HTML
 	Please take note of these details as these can <b>never</b> be recovered, and <b>anyone</b> can delete the image using &action=delete.<br><br>
 	<b>Filename:</b> {$unique_filename}.{$file_extension}<br>
 	<b>Decryption Key:</b> $encryption_key<br>
-	<b>URL:</b> <a href="https://dongfix.in/Gallery/Files/{$unique_filename}.{$file_extension}?key={$encryption_key}" target="_blank">Your UNIQUE URL</a><br>
-	<b>Delete Link:</b> <a href="https://dongfix.in/Gallery/Files/{$unique_filename}.{$file_extension}?key={$encryption_key}&action=delete&deletekey={$deletekey}" target="_blank">Your UNIQUE URL</a><br>
+	<b>URL:</b> <a href="{$base_url}/Files/{$unique_filename}.{$file_extension}?key={$encryption_key}" target="_blank">Your UNIQUE URL</a><br>
+	<b>Delete Link:</b> <a href="{$base_url}/quiet/Files/{$unique_filename}.{$file_extension}?key={$encryption_key}&action=delete&deletekey={$deletekey}" target="_blank">Your UNIQUE URL</a><br>
 HTML;
 
 $skeleton = str_replace( "{{content}}", $html, $skeleton );
+$skeleton = str_replace( "{{title}}", $uploader_title, $skeleton );
 exit( $skeleton );
